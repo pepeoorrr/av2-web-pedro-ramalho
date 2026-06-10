@@ -1,35 +1,34 @@
 {
-  "name": "js-basico",
+  "name": "sistema-agendamento-quadras",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Sistema de Agendamento de Quadras Esportivas - Backend",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "batata": "node src/index.js",
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node seed.js",
+    "studio": "prisma studio"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/h-fcosta/js-basico.git"
-  },
-  "keywords": [],
+  "keywords": [
+    "agendamento",
+    "quadras",
+    "esportivas",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/h-fcosta/js-basico/issues"
-  },
-  "homepage": "https://github.com/h-fcosta/js-basico#readme",
-  "description": "",
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.8.0",
-    "@prisma/client": "^7.7.0",
+    "@prisma/client": "^6.19.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mariadb": "^3.5.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "prisma": "^7.7.0"
+    "prisma": "^6.19.3"
   }
 }

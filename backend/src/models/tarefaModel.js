@@ -1,143 +1,200 @@
 // ========================================
-// MODEL - CAMADA DE DADOS
+// MODEL - CAMADA DE DADOS (USANDO PRISMA)
 // ========================================
 // Esta camada é responsável por:
-// - Armazenar os dados (em memória, banco de dados, etc.)
+// - Conectar com o banco de dados via Prisma
 // - Implementar a lógica de negócio
 // - Realizar operações CRUD (Create, Read, Update, Delete)
 
-/**
- * Array que armazena as tarefas temporariamente
- * Observação: esses dados somem quando o servidor reinicia
- * Futuramente, isso será substituído por um banco de dados
- */
-const tarefas = [
-  { id: 1, descricao: "Estudar química", concluida: false },
-  { id: 2, descricao: "Criar páginas no Figma", concluida: true }
-];
+import { prisma } from "../config/prisma.js";
 
 // ========================================
-// FUNÇÕES AUXILIARES
+// OPERAÇÕES CRUD - AGENDAMENTOS
 // ========================================
 
 /**
- * Procura o índice de uma tarefa no array com base no id
- * @param {number} id - ID da tarefa a ser encontrada
- * @returns {number} - Índice da tarefa ou -1 se não encontrar
+ * Obtém todos os agendamentos
+ * @param {Object} filtros - Filtros opcionais { quadra, status, data }
+ * @returns {Promise<Array>} - Array com todos os agendamentos
  */
-function encontrarIndiceTarefa(id) {
-  for (let i = 0; i < tarefas.length; i++) {
-    if (tarefas[i].id === id) {
-      return i;
+export async function obterTodosAgendamentos(filtros = {}) {
+  try {
+    const where = {};
+    
+    if (filtros.quadra) {
+      where.quadra = filtros.quadra;
     }
-  }
-  return -1;
-}
-
-/**
- * Gera um novo id para a próxima tarefa
- * Se o array estiver vazio, começa com 1
- * Caso contrário, pega o maior id existente e soma 1
- * @returns {number} - Novo ID gerado
- */
-function gerarNovoId() {
-  if (tarefas.length === 0) return 1;
-
-  let maiorId = 0;
-  for (let i = 0; i < tarefas.length; i++) {
-    if (tarefas[i].id > maiorId) {
-      maiorId = tarefas[i].id;
+    
+    if (filtros.status) {
+      where.status = filtros.status;
     }
+    
+    if (filtros.data) {
+      // Busca agendamentos da data especificada
+      const dataInicio = new Date(filtros.data);
+      dataInicio.setHours(0, 0, 0, 0);
+      
+      const dataFim = new Date(filtros.data);
+      dataFim.setHours(23, 59, 59, 999);
+      
+      where.data = {
+        gte: dataInicio,
+        lte: dataFim
+      };
+    }
+    
+    const agendamentos = await prisma.agendamento.findMany({
+      where,
+      orderBy: { data: 'asc' }
+    });
+    
+    return agendamentos;
+  } catch (error) {
+    throw new Error(`Erro ao buscar agendamentos: ${error.message}`);
   }
-
-  return maiorId + 1;
-}
-
-// ========================================
-// OPERAÇÕES CRUD
-// ========================================
-
-/**
- * Retorna todas as tarefas cadastradas
- * @returns {Array} - Array com todas as tarefas
- */
-export function obterTodasTarefas() {
-  return tarefas;
 }
 
 /**
- * Procura uma tarefa específica pelo id
- * @param {number} id - ID da tarefa a ser buscada
- * @returns {Object|null} - A tarefa encontrada ou null
+ * Obtém um agendamento específico pelo ID
+ * @param {number} id - ID do agendamento
+ * @returns {Promise<Object|null>} - O agendamento encontrado ou null
  */
-export function obterTarefaPorId(id) {
-  const indice = encontrarIndiceTarefa(id);
-
-  if (indice === -1) return null;
-
-  return tarefas[indice];
-}
-
-/**
- * Cria uma nova tarefa
- * A descrição é limpa com trim() para remover espaços extras
- * Toda nova tarefa começa com concluida = false
- * @param {string} descricao - Descrição da nova tarefa
- * @returns {Object} - A tarefa criada
- */
-export function criarNovaTarefa(descricao) {
-  const novaTarefa = {
-    id: gerarNovoId(),
-    descricao: descricao.trim(),
-    concluida: false
-  };
-
-  tarefas.push(novaTarefa);
-  return novaTarefa;
-}
-
-/**
- * Atualiza uma tarefa existente
- * Pode atualizar a descrição e/ou o status de conclusão
- * @param {number} id - ID da tarefa a ser atualizada
- * @param {string} novaDescricao - Nova descrição (opcional)
- * @param {boolean} novoStatus - Novo status de conclusão (opcional)
- * @returns {Object|null} - A tarefa atualizada ou null se não encontrar
- */
-export function atualizarTarefa(id, novaDescricao, novoStatus) {
-  const indice = encontrarIndiceTarefa(id);
-
-  if (indice === -1) return null;
-
-  const tarefa = tarefas[indice];
-
-  // Atualiza a descrição apenas se ela foi enviada
-  if (novaDescricao !== undefined) {
-    tarefa.descricao = novaDescricao.trim();
+export async function obterAgendamentoPorId(id) {
+  try {
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    return agendamento;
+  } catch (error) {
+    throw new Error(`Erro ao buscar agendamento: ${error.message}`);
   }
-
-  // Atualiza o status apenas se ele foi enviado
-  if (novoStatus !== undefined) {
-    tarefa.concluida = novoStatus;
-  }
-
-  return tarefa;
 }
 
 /**
- * Exclui uma tarefa pelo id
- * @param {number} id - ID da tarefa a ser excluída
- * @returns {Object|null} - A tarefa removida ou null se não encontrar
+ * Cria um novo agendamento
+ * @param {Object} dados - Dados do agendamento
+ * @returns {Promise<Object>} - O agendamento criado
  */
-export function excluirTarefa(id) {
-  const indice = encontrarIndiceTarefa(id);
+export async function criarAgendamento(dados) {
+  try {
+    // Validações básicas
+    if (!dados.nomeCliente || !dados.email || !dados.telefone || 
+        !dados.quadra || !dados.data || !dados.horario) {
+      throw new Error("Campos obrigatórios faltando");
+    }
+    
+    const agendamento = await prisma.agendamento.create({
+      data: {
+        nomeCliente: dados.nomeCliente.trim(),
+        email: dados.email.toLowerCase().trim(),
+        telefone: dados.telefone.trim(),
+        quadra: dados.quadra.trim(),
+        data: new Date(dados.data),
+        horario: dados.horario,
+        status: dados.status || "pendente",
+        observacoes: dados.observacoes ? dados.observacoes.trim() : null
+      }
+    });
+    
+    return agendamento;
+  } catch (error) {
+    throw new Error(`Erro ao criar agendamento: ${error.message}`);
+  }
+}
 
-  if (indice === -1) return null;
+/**
+ * Atualiza um agendamento existente
+ * @param {number} id - ID do agendamento
+ * @param {Object} dados - Dados a atualizar
+ * @returns {Promise<Object|null>} - O agendamento atualizado ou null
+ */
+export async function atualizarAgendamento(id, dados) {
+  try {
+    // Verifica se o agendamento existe
+    const agendamentoExistente = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!agendamentoExistente) {
+      return null;
+    }
+    
+    // Prepara os dados para atualização
+    const dataAtualizacao = {};
+    
+    if (dados.nomeCliente) dataAtualizacao.nomeCliente = dados.nomeCliente.trim();
+    if (dados.email) dataAtualizacao.email = dados.email.toLowerCase().trim();
+    if (dados.telefone) dataAtualizacao.telefone = dados.telefone.trim();
+    if (dados.quadra) dataAtualizacao.quadra = dados.quadra.trim();
+    if (dados.data) dataAtualizacao.data = new Date(dados.data);
+    if (dados.horario) dataAtualizacao.horario = dados.horario;
+    if (dados.status) dataAtualizacao.status = dados.status;
+    if (dados.observacoes !== undefined) {
+      dataAtualizacao.observacoes = dados.observacoes ? dados.observacoes.trim() : null;
+    }
+    
+    const agendamentoAtualizado = await prisma.agendamento.update({
+      where: { id: parseInt(id) },
+      data: dataAtualizacao
+    });
+    
+    return agendamentoAtualizado;
+  } catch (error) {
+    throw new Error(`Erro ao atualizar agendamento: ${error.message}`);
+  }
+}
 
-  const tarefaRemovida = tarefas[indice];
+/**
+ * Exclui um agendamento
+ * @param {number} id - ID do agendamento
+ * @returns {Promise<Object|null>} - O agendamento deletado ou null
+ */
+export async function excluirAgendamento(id) {
+  try {
+    // Verifica se o agendamento existe
+    const agendamentoExistente = await prisma.agendamento.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!agendamentoExistente) {
+      return null;
+    }
+    
+    const agendamentoRemovido = await prisma.agendamento.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    return agendamentoRemovido;
+  } catch (error) {
+    throw new Error(`Erro ao excluir agendamento: ${error.message}`);
+  }
+}
 
-  // Remove 1 elemento do array na posição encontrada
-  tarefas.splice(indice, 1);
-
-  return tarefaRemovida;
+/**
+ * Obtém estatísticas dos agendamentos
+ * @returns {Promise<Object>} - Objeto com estatísticas
+ */
+export async function obterEstatisticas() {
+  try {
+    const total = await prisma.agendamento.count();
+    const confirmados = await prisma.agendamento.count({
+      where: { status: "confirmado" }
+    });
+    const pendentes = await prisma.agendamento.count({
+      where: { status: "pendente" }
+    });
+    const cancelados = await prisma.agendamento.count({
+      where: { status: "cancelado" }
+    });
+    
+    return {
+      total,
+      confirmados,
+      pendentes,
+      cancelados
+    };
+  } catch (error) {
+    throw new Error(`Erro ao obter estatísticas: ${error.message}`);
+  }
 }

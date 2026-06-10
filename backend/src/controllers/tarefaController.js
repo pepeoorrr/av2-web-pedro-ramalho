@@ -7,137 +7,360 @@
 // - Chamar os métodos do Model
 // - Retornar as respostas adequadas
 
-import * as TarefaModel from "../models/tarefaModel.js";
+import * as AgendamentoModel from "../models/tarefaModel.js";
+
+// ========================================
+// VALIDAÇÕES
+// ========================================
+
+function validarEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
+function validarTelefone(telefone) {
+  const regex = /^[\d\s\-\(\)]+$/;
+  return telefone.length >= 8 && regex.test(telefone);
+}
+
+function validarHorario(horario) {
+  const regex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+  return regex.test(horario);
+}
+
+// ========================================
+// ROTAS DE AGENDAMENTOS
+// ========================================
 
 /**
- * Retorna todas as tarefas em formato JSON
- * @route GET /tarefas
+ * Retorna todos os agendamentos com filtros opcionais
+ * @route GET /agendamentos?quadra=...&status=...&data=...
  */
-export function listarTarefas(req, res) {
-  const tarefas = TarefaModel.obterTodasTarefas();
-  res.json(tarefas);
+export async function listarAgendamentos(req, res) {
+  try {
+    const { quadra, status, data } = req.query;
+    
+    const filtros = {};
+    if (quadra) filtros.quadra = quadra;
+    if (status) filtros.status = status;
+    if (data) filtros.data = data;
+    
+    const agendamentos = await AgendamentoModel.obterTodosAgendamentos(filtros);
+    
+    res.json({
+      sucesso: true,
+      total: agendamentos.length,
+      dados: agendamentos
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
+  }
 }
 
 /**
- * Retorna uma tarefa específica com base no id enviado na URL
- * @route GET /tarefas/:id
+ * Retorna um agendamento específico pelo ID
+ * @route GET /agendamentos/:id
  */
-export function obterTarefa(req, res) {
-  // Converte o id recebido pela URL para número
-  const idNumero = Number(req.params.id);
-
-  // Valida se o id é realmente um número
-  if (Number.isNaN(idNumero)) {
-    return res.status(400).json({ erro: "ID inválido" });
+export async function obterAgendamento(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Valida se o id é um número válido
+    if (Number.isNaN(Number(id))) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID inválido"
+      });
+    }
+    
+    const agendamento = await AgendamentoModel.obterAgendamentoPorId(id);
+    
+    if (!agendamento) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Agendamento não encontrado"
+      });
+    }
+    
+    res.json({
+      sucesso: true,
+      dados: agendamento
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
   }
-
-  // Busca a tarefa pelo id no Model
-  const tarefa = TarefaModel.obterTarefaPorId(idNumero);
-
-  // Se não encontrar, retorna erro 404
-  if (!tarefa) {
-    return res.status(404).json({ erro: "Tarefa não encontrada" });
-  }
-
-  // Se encontrar, retorna a tarefa
-  res.json(tarefa);
 }
 
 /**
- * Cria uma nova tarefa
- * @route POST /tarefas
+ * Cria um novo agendamento
+ * @route POST /agendamentos
  */
-export function criarTarefa(req, res) {
-  // Pega a descrição enviada no corpo da requisição
-  const { descricao } = req.body;
-
-  // Valida se a descrição foi enviada corretamente
-  if (typeof descricao !== "string" || descricao.trim() === "") {
-    return res.status(400).json({ erro: "Descrição é obrigatória" });
+export async function criarAgendamento(req, res) {
+  try {
+    const { nomeCliente, email, telefone, quadra, data, horario, status, observacoes } = req.body;
+    
+    // ========== VALIDAÇÕES ==========
+    
+    // Validar nome do cliente
+    if (!nomeCliente || typeof nomeCliente !== "string" || nomeCliente.trim().length === 0) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Nome do cliente é obrigatório"
+      });
+    }
+    
+    // Validar email
+    if (!email || !validarEmail(email)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Email inválido"
+      });
+    }
+    
+    // Validar telefone
+    if (!telefone || !validarTelefone(telefone)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Telefone inválido (mínimo 8 dígitos)"
+      });
+    }
+    
+    // Validar quadra
+    if (!quadra || typeof quadra !== "string" || quadra.trim().length === 0) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Quadra é obrigatória"
+      });
+    }
+    
+    // Validar data
+    if (!data) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Data é obrigatória"
+      });
+    }
+    
+    const dataAgendamento = new Date(data);
+    if (isNaN(dataAgendamento.getTime())) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Data inválida"
+      });
+    }
+    
+    // Não permite agendar no passado
+    if (dataAgendamento < new Date()) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Não é permitido agendar em data passada"
+      });
+    }
+    
+    // Validar horário
+    if (!horario || !validarHorario(horario)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Horário inválido (use formato HH:MM)"
+      });
+    }
+    
+    // Validar status (se fornecido)
+    const statusValidos = ["pendente", "confirmado", "cancelado"];
+    if (status && !statusValidos.includes(status)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Status inválido (pendente, confirmado ou cancelado)"
+      });
+    }
+    
+    // ========== CRIAR AGENDAMENTO ==========
+    
+    const agendamento = await AgendamentoModel.criarAgendamento({
+      nomeCliente,
+      email,
+      telefone,
+      quadra,
+      data,
+      horario,
+      status: status || "pendente",
+      observacoes
+    });
+    
+    res.status(201).json({
+      sucesso: true,
+      mensagem: "Agendamento criado com sucesso!",
+      dados: agendamento
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
   }
-
-  // Cria a nova tarefa através do Model
-  const tarefaCriada = TarefaModel.criarNovaTarefa(descricao);
-
-  // Retorna status 201 (criado com sucesso)
-  res.status(201).json({
-    mensagem: "Tarefa criada com sucesso!",
-    tarefa: tarefaCriada
-  });
 }
 
 /**
- * Atualiza parcialmente uma tarefa existente
- * @route PATCH /tarefas/:id
+ * Atualiza um agendamento existente
+ * @route PUT /agendamentos/:id
  */
-export function atualizarTarefa(req, res) {
-  // Converte o id da URL para número
-  const idNumero = Number(req.params.id);
-
-  // Pega os dados enviados no corpo da requisição
-  const { descricao, concluida } = req.body;
-
-  // Valida o id
-  if (Number.isNaN(idNumero)) {
-    return res.status(400).json({ erro: "ID inválido" });
+export async function atualizarAgendamento(req, res) {
+  try {
+    const { id } = req.params;
+    const dados = req.body;
+    
+    // Valida se o id é um número válido
+    if (Number.isNaN(Number(id))) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID inválido"
+      });
+    }
+    
+    // ========== VALIDAÇÕES ==========
+    
+    // Validar email (se fornecido)
+    if (dados.email && !validarEmail(dados.email)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Email inválido"
+      });
+    }
+    
+    // Validar telefone (se fornecido)
+    if (dados.telefone && !validarTelefone(dados.telefone)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Telefone inválido (mínimo 8 dígitos)"
+      });
+    }
+    
+    // Validar data (se fornecida)
+    if (dados.data) {
+      const dataAgendamento = new Date(dados.data);
+      if (isNaN(dataAgendamento.getTime())) {
+        return res.status(400).json({
+          sucesso: false,
+          erro: "Data inválida"
+        });
+      }
+      
+      // Não permite agendar no passado
+      if (dataAgendamento < new Date()) {
+        return res.status(400).json({
+          sucesso: false,
+          erro: "Não é permitido agendar em data passada"
+        });
+      }
+    }
+    
+    // Validar horário (se fornecido)
+    if (dados.horario && !validarHorario(dados.horario)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Horário inválido (use formato HH:MM)"
+      });
+    }
+    
+    // Validar status (se fornecido)
+    const statusValidos = ["pendente", "confirmado", "cancelado"];
+    if (dados.status && !statusValidos.includes(dados.status)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "Status inválido (pendente, confirmado ou cancelado)"
+      });
+    }
+    
+    // ========== ATUALIZAR AGENDAMENTO ==========
+    
+    const agendamento = await AgendamentoModel.atualizarAgendamento(id, dados);
+    
+    if (!agendamento) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Agendamento não encontrado"
+      });
+    }
+    
+    res.json({
+      sucesso: true,
+      mensagem: "Agendamento atualizado com sucesso!",
+      dados: agendamento
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
   }
-
-  // Valida a descrição, se ela foi enviada
-  if (
-    descricao !== undefined &&
-    (typeof descricao !== "string" || descricao.trim() === "")
-  ) {
-    return res.status(400).json({ erro: "Descrição inválida" });
-  }
-
-  // Valida o status concluida, se ele foi enviado
-  if (concluida !== undefined && typeof concluida !== "boolean") {
-    return res.status(400).json({ erro: "concluida deve ser boolean" });
-  }
-
-  // Tenta atualizar a tarefa através do Model
-  const tarefaAtualizada = TarefaModel.atualizarTarefa(
-    idNumero,
-    descricao,
-    concluida
-  );
-
-  // Se não encontrar a tarefa, retorna erro 404
-  if (!tarefaAtualizada) {
-    return res.status(404).json({ erro: "Tarefa não encontrada" });
-  }
-
-  // Se atualizar com sucesso, retorna a tarefa atualizada
-  res.json({
-    mensagem: "Tarefa atualizada com sucesso!",
-    tarefa: tarefaAtualizada
-  });
 }
 
 /**
- * Remove uma tarefa pelo id
- * @route DELETE /tarefas/:id
+ * Exclui um agendamento
+ * @route DELETE /agendamentos/:id
  */
-export function excluirTarefa(req, res) {
-  // Converte o id da URL para número
-  const idNumero = Number(req.params.id);
-
-  // Valida o id
-  if (Number.isNaN(idNumero)) {
-    return res.status(400).json({ erro: "ID inválido" });
+export async function excluirAgendamento(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Valida se o id é um número válido
+    if (Number.isNaN(Number(id))) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "ID inválido"
+      });
+    }
+    
+    const agendamento = await AgendamentoModel.excluirAgendamento(id);
+    
+    if (!agendamento) {
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Agendamento não encontrado"
+      });
+    }
+    
+    res.json({
+      sucesso: true,
+      mensagem: "Agendamento excluído com sucesso!",
+      dados: agendamento
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
   }
+}
 
-  // Tenta excluir a tarefa através do Model
-  const tarefaRemovida = TarefaModel.excluirTarefa(idNumero);
-
-  // Se não encontrar, retorna erro 404
-  if (!tarefaRemovida) {
-    return res.status(404).json({ erro: "Tarefa não encontrada" });
+/**
+ * Retorna estatísticas dos agendamentos
+ * @route GET /agendamentos/stats/resumo
+ */
+export async function obterEstatisticas(req, res) {
+  try {
+    const stats = await AgendamentoModel.obterEstatisticas();
+    
+    res.json({
+      sucesso: true,
+      dados: stats
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
   }
-
-  // Retorna a tarefa que foi removida
-  res.json({
-    mensagem: "Tarefa excluída com sucesso!",
-    tarefa: tarefaRemovida
-  });
 }

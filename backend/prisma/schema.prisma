@@ -1,21 +1,46 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Prisma Schema - Sistema de Agendamento de Quadras Esportivas
+// Database: MySQL / MariaDB
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
-// Modelo de Tarefa
-model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  completed   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+
+// ========================================
+// MODELO: AGENDAMENTO
+// ========================================
+// Representa um agendamento de quadra esportiva
+
+model Agendamento {
+  id              Int      @id @default(autoincrement())
+  
+  // Informações do cliente
+  nomeCliente     String   @db.VarChar(150)
+  email           String   @db.VarChar(100)
+  telefone        String   @db.VarChar(20)
+  
+  // Informações da quadra
+  quadra          String   @db.VarChar(50)  // Ex: "Quadra 1", "Quadra A", "Futsal"
+  
+  // Data e hora do agendamento
+  data            DateTime
+  horario         String   @db.VarChar(5)   // HH:MM
+  
+  // Status do agendamento
+  status          String   @default("pendente") @db.VarChar(20)  // pendente, confirmado, cancelado
+  
+  // Observações adicionais
+  observacoes     String?  @db.Text
+  
+  // Auditoria
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([data])
+  @@index([status])
+  @@index([quadra])
 }

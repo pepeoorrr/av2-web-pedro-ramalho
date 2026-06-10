@@ -7,39 +7,45 @@
 // - Organizar as rotas por recurso/entidade
 
 import express from "express";
-import * as TarefaController from "../controllers/tarefaController.js";
+import * as AgendamentoController from "../controllers/tarefaController.js";
 
 // Cria um roteador do Express
 const router = express.Router();
 
 // ========================================
-// DEFINIÇÃO DAS ROTAS DE TAREFAS
+// DEFINIÇÃO DAS ROTAS DE AGENDAMENTOS
 // ========================================
 
 /**
- * GET /tarefas - Lista todas as tarefas
+ * GET /agendamentos - Lista todos os agendamentos
+ * Filtros opcionais: ?quadra=...&status=...&data=...
  */
-router.get("/tarefas", TarefaController.listarTarefas);
+router.get("/agendamentos", AgendamentoController.listarAgendamentos);
 
 /**
- * GET /tarefas/:id - Obtém uma tarefa específica
+ * GET /agendamentos/stats/resumo - Retorna estatísticas
  */
-router.get("/tarefas/:id", TarefaController.obterTarefa);
+router.get("/agendamentos/stats/resumo", AgendamentoController.obterEstatisticas);
 
 /**
- * POST /tarefas - Cria uma nova tarefa
+ * GET /agendamentos/:id - Obtém um agendamento específico
  */
-router.post("/tarefas", TarefaController.criarTarefa);
+router.get("/agendamentos/:id", AgendamentoController.obterAgendamento);
 
 /**
- * PATCH /tarefas/:id - Atualiza uma tarefa parcialmente
+ * POST /agendamentos - Cria um novo agendamento
  */
-router.patch("/tarefas/:id", TarefaController.atualizarTarefa);
+router.post("/agendamentos", AgendamentoController.criarAgendamento);
 
 /**
- * DELETE /tarefas/:id - Remove uma tarefa
+ * PUT /agendamentos/:id - Atualiza um agendamento completamente
  */
-router.delete("/tarefas/:id", TarefaController.excluirTarefa);
+router.put("/agendamentos/:id", AgendamentoController.atualizarAgendamento);
+
+/**
+ * DELETE /agendamentos/:id - Remove um agendamento
+ */
+router.delete("/agendamentos/:id", AgendamentoController.excluirAgendamento);
 
 // Exporta o roteador para ser usado no app principal
 export default router;
