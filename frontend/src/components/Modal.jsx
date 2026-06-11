@@ -12,27 +12,39 @@ export function Modal({ isOpen, title, message, onConfirm, onCancel, confirmText
     }
   };
   
+  const getIconEmoji = () => {
+    switch (type) {
+      case "danger":
+        return "⚠️";
+      case "success":
+        return "✓";
+      default:
+        return "ℹ️";
+    }
+  };
+  
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="card-header">
-          <h2 className="m-0">{title}</h2>
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-4">{getIconEmoji()}</div>
+          <h2 className="m-0 text-2xl">{title}</h2>
         </div>
         
-        <div className="card-body">
-          <p>{message}</p>
+        <div className="mb-6">
+          <p className="text-gray-600 text-center">{message}</p>
         </div>
         
-        <div className="card-footer gap-3">
+        <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="btn btn-outline"
+            className="btn btn-outline flex-1"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={getButtonClass()}
+            className={`${getButtonClass()} flex-1`}
           >
             {confirmText}
           </button>

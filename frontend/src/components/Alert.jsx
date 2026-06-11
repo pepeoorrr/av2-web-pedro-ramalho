@@ -29,15 +29,16 @@ export function Alert({ type = "info", message, onClose }) {
   };
   
   return (
-    <div className={getAlertClass()}>
-      <div className="flex items-center gap-2">
-        <span className="text-xl font-bold">{getIcon()}</span>
-        <span>{message}</span>
+    <div className={getAlertClass()} style={{ animationDuration: "0.4s" }}>
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold">{getIcon()}</span>
+        <span className="font-medium">{message}</span>
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="text-xl cursor-pointer hover:opacity-70"
+          className="text-xl cursor-pointer hover:opacity-70 transition-opacity flex-shrink-0"
+          aria-label="Fechar alerta"
         >
           ✕
         </button>

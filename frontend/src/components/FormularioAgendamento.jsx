@@ -82,12 +82,15 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-      <h2 className="mb-6">Agendamento de Quadra</h2>
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-8 max-w-3xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-center">🏐 Agendar Quadra</h2>
+        <p className="text-center text-gray-600 mt-2">Preencha os dados abaixo para criar seu agendamento</p>
+      </div>
       
       {/* Nome do Cliente */}
-      <div className="mb-4">
-        <label htmlFor="nomeCliente">Nome do Cliente *</label>
+      <div className="mb-6">
+        <label htmlFor="nomeCliente" className="font-bold">👤 Nome do Cliente *</label>
         <input
           type="text"
           id="nomeCliente"
@@ -96,16 +99,17 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
           onChange={handleChange}
           placeholder="Ex: João Silva"
           disabled={isLoading}
+          className={erros.nomeCliente ? "ring-2 ring-red-500" : ""}
         />
         {erros.nomeCliente && (
-          <p className="text-red-600 text-sm mt-1">{erros.nomeCliente}</p>
+          <p className="text-red-600 text-sm mt-2 flex items-center gap-1">✕ {erros.nomeCliente}</p>
         )}
       </div>
       
       {/* Email e Telefone */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
-          <label htmlFor="email">Email *</label>
+          <label htmlFor="email" className="font-bold">📧 Email *</label>
           <input
             type="email"
             id="email"
@@ -114,14 +118,15 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
             onChange={handleChange}
             placeholder="exemplo@email.com"
             disabled={isLoading}
+            className={erros.email ? "ring-2 ring-red-500" : ""}
           />
           {erros.email && (
-            <p className="text-red-600 text-sm mt-1">{erros.email}</p>
+            <p className="text-red-600 text-sm mt-2 flex items-center gap-1">✕ {erros.email}</p>
           )}
         </div>
         
         <div>
-          <label htmlFor="telefone">Telefone *</label>
+          <label htmlFor="telefone" className="font-bold">📞 Telefone *</label>
           <input
             type="tel"
             id="telefone"
@@ -130,17 +135,18 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
             onChange={handleChange}
             placeholder="(11) 98765-4321"
             disabled={isLoading}
+            className={erros.telefone ? "ring-2 ring-red-500" : ""}
           />
           {erros.telefone && (
-            <p className="text-red-600 text-sm mt-1">{erros.telefone}</p>
+            <p className="text-red-600 text-sm mt-2 flex items-center gap-1">✕ {erros.telefone}</p>
           )}
         </div>
       </div>
       
       {/* Quadra, Data e Horário */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div>
-          <label htmlFor="quadra">Quadra *</label>
+          <label htmlFor="quadra" className="font-bold">🏐 Quadra *</label>
           <select
             id="quadra"
             name="quadra"
@@ -155,7 +161,7 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
         </div>
         
         <div>
-          <label htmlFor="data">Data *</label>
+          <label htmlFor="data" className="font-bold">📅 Data *</label>
           <input
             type="date"
             id="data"
@@ -163,14 +169,15 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
             value={formData.data}
             onChange={handleChange}
             disabled={isLoading}
+            className={erros.data ? "ring-2 ring-red-500" : ""}
           />
           {erros.data && (
-            <p className="text-red-600 text-sm mt-1">{erros.data}</p>
+            <p className="text-red-600 text-sm mt-2 flex items-center gap-1">✕ {erros.data}</p>
           )}
         </div>
         
         <div>
-          <label htmlFor="horario">Horário *</label>
+          <label htmlFor="horario" className="font-bold">⏰ Horário *</label>
           <select
             id="horario"
             name="horario"
@@ -186,8 +193,8 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
       </div>
       
       {/* Status */}
-      <div className="mb-4">
-        <label htmlFor="status">Status</label>
+      <div className="mb-6">
+        <label htmlFor="status" className="font-bold">📊 Status</label>
         <select
           id="status"
           name="status"
@@ -195,33 +202,33 @@ export function FormularioAgendamento({ dadosIniciais, onSubmit, isLoading }) {
           onChange={handleChange}
           disabled={isLoading}
         >
-          <option value="pendente">Pendente</option>
-          <option value="confirmado">Confirmado</option>
-          <option value="cancelado">Cancelado</option>
+          <option value="pendente">⏳ Pendente</option>
+          <option value="confirmado">✅ Confirmado</option>
+          <option value="cancelado">❌ Cancelado</option>
         </select>
       </div>
       
       {/* Observações */}
-      <div className="mb-6">
-        <label htmlFor="observacoes">Observações</label>
+      <div className="mb-8">
+        <label htmlFor="observacoes" className="font-bold">📝 Observações</label>
         <textarea
           id="observacoes"
           name="observacoes"
           value={formData.observacoes}
           onChange={handleChange}
-          placeholder="Digite observações adicionais..."
+          placeholder="Digite observações adicionais (opcional)..."
           disabled={isLoading}
         />
       </div>
       
       {/* Botão Submit */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 justify-center">
         <button
           type="submit"
-          className="btn btn-primary"
+          className="btn btn-primary btn-large"
           disabled={isLoading}
         >
-          {isLoading ? "Salvando..." : "Salvar Agendamento"}
+          {isLoading ? "💾 Salvando..." : "✨ Salvar Agendamento"}
         </button>
       </div>
     </form>

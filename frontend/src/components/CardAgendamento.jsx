@@ -17,6 +17,19 @@ export function CardAgendamento({ agendamento, onDelete }) {
         return "badge-info";
     }
   };
+
+  const getStatusEmoji = () => {
+    switch (agendamento.status) {
+      case "confirmado":
+        return "✅";
+      case "pendente":
+        return "⏳";
+      case "cancelado":
+        return "❌";
+      default:
+        return "ℹ️";
+    }
+  };
   
   const formatarStatus = (status) => {
     const statusMap = {
@@ -28,16 +41,16 @@ export function CardAgendamento({ agendamento, onDelete }) {
   };
   
   return (
-    <div className="card hover:shadow-lg transition-shadow">
+    <div className="card hover:shadow-2xl hover:scale-105 transition-all duration-300 border-l-4 border-blue-500">
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-semibold text-gray-900 m-0">
-            {agendamento.nomeCliente}
+        <div className="flex-1">
+          <h3 className="font-bold text-lg text-gray-900 m-0">
+            👤 {agendamento.nomeCliente}
           </h3>
-          <p className="text-sm text-gray-500 m-0">{agendamento.email}</p>
+          <p className="text-sm text-gray-500 m-0">📧 {agendamento.email}</p>
         </div>
         <span className={`badge ${getBadgeClass()}`}>
-          {formatarStatus(agendamento.status)}
+          {getStatusEmoji()} {formatarStatus(agendamento.status)}
         </span>
       </div>
       
@@ -45,38 +58,38 @@ export function CardAgendamento({ agendamento, onDelete }) {
       
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">
-            Quadra
+          <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wide">
+            🏐 Quadra
           </p>
-          <p className="font-semibold text-gray-900">
+          <p className="font-bold text-gray-900 text-lg">
             {agendamento.quadra}
           </p>
         </div>
         
         <div>
-          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">
-            Telefone
+          <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wide">
+            📞 Telefone
           </p>
-          <p className="font-semibold text-gray-900">
+          <p className="font-bold text-gray-900">
             {agendamento.telefone}
           </p>
         </div>
         
         <div>
-          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">
-            Data
+          <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wide">
+            📅 Data
           </p>
-          <p className="font-semibold text-gray-900">
+          <p className="font-bold text-gray-900">
             {formatarData(agendamento.data)}
           </p>
         </div>
         
         <div>
-          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">
-            Horário
+          <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wide">
+            ⏰ Horário
           </p>
-          <p className="font-semibold text-gray-900">
-            {agendamento.horario}h
+          <p className="font-bold text-gray-900">
+            {agendamento.horario}
           </p>
         </div>
       </div>
@@ -84,9 +97,9 @@ export function CardAgendamento({ agendamento, onDelete }) {
       {agendamento.observacoes && (
         <>
           <div className="divider" />
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">
-              Observações
+          <div className="mb-4 bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
+            <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wide">
+              📝 Observações
             </p>
             <p className="text-gray-700 text-sm">
               {agendamento.observacoes}
@@ -95,18 +108,18 @@ export function CardAgendamento({ agendamento, onDelete }) {
         </>
       )}
       
-      <div className="card-footer gap-2">
+      <div className="card-footer gap-2 justify-between flex-row">
         <Link 
           to={`/editar/${agendamento.id}`}
           className="btn btn-outline btn-small"
         >
-          Editar
+          ✏️ Editar
         </Link>
         <button
           onClick={() => onDelete(agendamento.id)}
           className="btn btn-danger btn-small"
         >
-          Deletar
+          🗑️ Deletar
         </button>
       </div>
     </div>
